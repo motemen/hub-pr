@@ -1,0 +1,55 @@
+#compdef hub-pr
+
+function _hub-pr () {
+    local state
+    local ret=1
+    _arguments -C \
+        '1: :__hub-pr_commands' \
+        '*:: :->args' \
+        && ret=0
+
+    case $state in
+        (args)
+            case $words[1] in
+                (checkout)
+                    _arguments -C \
+                        '1: :__hub-pr_pullrequests' \
+                        && ret=0
+                    ;;
+
+                (merge)
+                    _arguments -C \
+                        '1: :__hub-pr_branches' \
+                        && ret=0
+                    ;;
+            esac
+            ;;
+    esac
+
+    return ret
+}
+
+__hub-pr_commands () {
+    local -a _commands
+    _commands=( ${(@f)"$(_call_program commands hub-pr -help 2>&1 | gsed '1,/Commands:/d; s/^    //; s/	/:/')"} )
+
+    _describe -t commands commands _commands
+}
+
+__hub-pr_pullrequests () {
+    local IFS='	'
+    local -a _prs
+    _call_program commands hub-pr list | while read num title; do
+        _prs=($_prs "${num// /}:$title")
+    done
+
+    _describe 'pull requests' _prs
+}
+
+__hub-pr_branches () {
+    local -a _branches
+    _branches=( ${(@f)"$(_call_program commands git for-each-ref refs/heads --format='\%\(refname:short\)')"} )
+    _describe branches _branches
+}
+
+_hub-pr "$@"
