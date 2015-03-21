@@ -1,4 +1,5 @@
 //go:generate go run _tools/gen_commands.go
+
 package main
 
 import (
@@ -7,35 +8,25 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sort"
 	"strings"
 	"text/template"
 
 	"github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit"
 	"github.com/github/hub/git"
 	"github.com/github/hub/github"
+	"github.com/motemen/cli"
 )
 
 const defaultTemplate = `#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}`
 
-type command struct {
-	name        string
-	usage       string
-	description string
-	action      func(*flag.FlagSet, []string) error
-}
-
-var commands = map[string]command{}
-
-/*
-+command checkout - Checkout a branch for a pull request
-
-	checkout [-f TEMPLATE] PULL_REQUEST_NUMBER
-
-Checks out a branch corresponding to given pull request number.  The branch
-name is based on the template, which defaults to
-'#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}'.
-*/
+// +command checkout - Checkout a branch for a pull request
+//
+// 	checkout [-f TEMPLATE] PULL_REQUEST_NUMBER
+//
+// Checks out a branch corresponding to given pull request
+// number.  The branch name is based on the template,
+// which defaults to
+// '#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}'.
 func doCheckout(flags *flag.FlagSet, args []string) error {
 	tmpl, err := git.GlobalConfig("hub-pr.checkoutBranch")
 	if err != nil || tmpl == "" {
@@ -49,7 +40,7 @@ func doCheckout(flags *flag.FlagSet, args []string) error {
 
 	prNumber := flags.Arg(0)
 	if prNumber == "" {
-		return usageError
+		return cli.ErrUsage
 	}
 
 	cli, proj, err := setup()
@@ -100,13 +91,11 @@ func doCheckout(flags *flag.FlagSet, args []string) error {
 	return r.err
 }
 
-/*
-+command list - List pull requests
-
-	list
-
-Lists pull requests for current project.
-*/
+// +command list - List pull requests
+//
+// 	list
+//
+// Lists pull requests for current project.
 func doList(flags *flag.FlagSet, args []string) error {
 	flags.Parse(args)
 
@@ -131,20 +120,18 @@ func doList(flags *flag.FlagSet, args []string) error {
 	return nil
 }
 
-/*
-+command merge - Merge a branch of a pull request
-
-	merge BRANCH
-
-Invokes 'git merge' for the branch created with 'hub-pr checkout' with a
-default commit message including Pull Request number and title, similar to the
-GitHub Merge Button.
-*/
+// +command merge - Merge a branch of a pull request
+//
+// 	merge BRANCH
+//
+// Invokes 'git merge' for the branch created with 'hub-pr checkout' with a
+// default commit message including Pull Request number and title, similar to
+// the GitHub Merge Button.
 func doMerge(flags *flag.FlagSet, args []string) error {
 	flags.Parse(args)
 
 	if flags.NArg() < 1 {
-		return usageError
+		return cli.ErrUsage
 	}
 
 	cli, proj, err := setup()
@@ -165,13 +152,12 @@ func doMerge(flags *flag.FlagSet, args []string) error {
 	return git.Run("merge", "--no-ff", "--edit", "-m", message, branch)
 }
 
-/*
-+command browse - Open pull request page with browser
-
-	browse
-
-Opens a web browser for the URL of Pull Request corresponding to current branch.
-*/
+// +command browse - Open pull request page with browser
+//
+// 	browse
+//
+// Opens a web browser for the URL of Pull Request corresponding to current
+// branch.
 func doBrowse(flags *flag.FlagSet, args []string) error {
 	flags.Parse(args)
 
@@ -220,69 +206,6 @@ func (r *gitRunner) resetError() {
 	r.err = nil
 }
 
-var usageError = fmt.Errorf("usage error")
-
-func commandUsage(cmd command, flags *flag.FlagSet) string {
-	usage := fmt.Sprintf("Usage: %s %s", os.Args[0], cmd.description)
-
-	if flags == nil || flags.NFlag() == 0 {
-		return usage
-	}
-
-	buf := bytes.NewBufferString(usage)
-	buf.WriteString("\n\nOptions:\n")
-
-	defer flags.SetOutput(nil)
-	flags.SetOutput(buf)
-
-	flags.PrintDefaults()
-
-	return buf.String()
-}
-
-func printUsage() {
-	fmt.Fprintf(os.Stderr, "Usage: %s COMMAND [ARGS...]\n\n", os.Args[0])
-	fmt.Fprintf(os.Stderr, "Commands:\n")
-
-	commandNames := make([]string, 0, len(commands))
-	for name := range commands {
-		commandNames = append(commandNames, name)
-	}
-
-	sort.Strings(commandNames)
-
-	for _, name := range commandNames {
-		fmt.Fprintf(os.Stderr, "    %s\t%s\n", name, commands[name].usage)
-	}
-
-	os.Exit(1)
-}
-
-func main() {
-	args := os.Args[1:]
-	if len(args) == 0 {
-		printUsage()
-	}
-
-	cmdName := args[0]
-	if cmd, ok := commands[cmdName]; ok {
-		flags := flag.NewFlagSet(cmdName, flag.ExitOnError)
-		flags.Usage = func() {
-			fmt.Fprintln(os.Stderr, commandUsage(cmd, flags))
-		}
-
-		err := cmd.action(flags, args[1:])
-		if err == usageError {
-			flags.Usage()
-			os.Exit(1)
-		} else {
-			dieIf(err)
-		}
-	} else {
-		printUsage()
-	}
-}
-
 func setup() (*github.Client, *github.Project, error) {
 	repo, err := github.LocalRepo()
 	if err != nil {
@@ -296,9 +219,6 @@ func setup() (*github.Client, *github.Project, error) {
 	return cli, proj, err
 }
 
-func dieIf(err error) {
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+func main() {
+	cli.Run(os.Args[1:])
 }
