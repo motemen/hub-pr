@@ -2,7 +2,7 @@
 
 package main
 
-import "github.com/motemen/cli"
+import "github.com/motemen/go-cli"
 
 func init() {
 	cli.Use(
