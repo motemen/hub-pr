@@ -26,7 +26,8 @@ const defaultTemplate = `#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}`
 // Checks out a branch corresponding to given pull request
 // number.  The branch name is based on the template,
 // which defaults to
-// '#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}'.
+// '#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}',
+// where the template context is *octokit.PullRequest.
 func doCheckout(flags *flag.FlagSet, args []string) error {
 	tmpl, err := git.GlobalConfig("hub-pr.checkoutBranch")
 	if err != nil || tmpl == "" {

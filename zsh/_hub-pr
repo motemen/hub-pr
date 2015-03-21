@@ -31,7 +31,7 @@ function _hub-pr () {
 
 __hub-pr_commands () {
     local -a _commands
-    _commands=( ${(@f)"$(_call_program commands hub-pr -help 2>&1 | gsed '1,/Commands:/d; s/^    //; s/	/:/')"} )
+    _commands=( ${(@f)"$(_call_program commands hub-pr -help 2>&1 | gsed '1,/Commands:/d; s/^    //; s/ \+/:/')"} )
 
     _describe -t commands commands _commands
 }
