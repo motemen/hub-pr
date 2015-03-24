@@ -1,0 +1,42 @@
+= hub-pr
+
+Personal workflow for handling pull requests on open-source projects
+
+== Installation
+
+----
+go get github.com/motemen/hub-pr
+----
+
+== Usage
+
+----
+Usage: hub-pr <command> [<args>]
+
+Commands:
+    browse      Open pull request page with browser
+    checkout    Checkout a branch for a pull request
+    list        List pull requests
+    merge       Merge a branch of a pull request
+----
+
+== Description
+
+hub-pr supports a certain way handling pull requests from forked repository. Especially, it provides a way to check out the pull request locally so that you can append commits upon it.
+
+Running
+
+----
+hub-pr checkout PULL_REQUEST_NUMBER
+----
+
+will do below:
+
+* Add a remote pointing forked repository with the name of the pull request author
+* Check out a new branch tracking pull request's head branch named "#<PR number>-<author>/<branch>", e.g. "#23-motemen/fix".
+
+TBD
+
+== Author
+
+motemen <motemen@gmail.com>
