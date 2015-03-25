@@ -24,18 +24,27 @@ Commands:
 
 hub-pr supports a certain way handling pull requests from forked repository. Especially, it provides a way to check out the pull request locally so that you can append commits upon it.
 
-Running
+=== Checking out a Pull Request branch
 
 ----
 hub-pr checkout PULL_REQUEST_NUMBER
 ----
 
-will do below:
+Will do below:
 
 * Add a remote pointing forked repository with the name of the pull request author
-* Check out a new branch tracking pull request's head branch named "#<PR number>-<author>/<branch>", e.g. "#23-motemen/fix".
+* Check out a new branch tracking pull request's head branch named
+  `#<PR number>-<author>/<ref>`, e.g. `#23-motemen/fix`.
+* Stores the pull request number as `branch.<branch>.prNumber` into local configuration for later reference.
 
-TBD
+=== Merging a Pull Request branch
+
+----
+hub-pr merge BRANCH
+----
+
+Will invoke a normal git-merge with a commit message same as what will used
+when hitting the Merge Button on the GitHub web. The branch must be checked out with `hub-pr checkout`.
 
 == Author
 
