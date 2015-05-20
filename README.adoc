@@ -15,6 +15,7 @@ Usage: hub-pr <command> [<args>]
 
 Commands:
     browse      Open pull request page with browser
+    diff        Show pull request's diff
     checkout    Checkout a branch for a pull request
     list        List pull requests
     merge       Merge a branch of a pull request
@@ -45,6 +46,14 @@ hub-pr merge BRANCH
 
 Will invoke a normal git-merge with a commit message same as what will used
 when hitting the Merge Button on the GitHub web. The branch must be checked out with `hub-pr checkout`.
+
+=== Showing a Pull Request's diff
+
+----
+hub-pr diff
+----
+
+Runs "git diff" between the base and head of the Pull Reuqest corresponding current branch.
 
 == Author
 

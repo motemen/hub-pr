@@ -182,6 +182,35 @@ func doBrowse(flags *flag.FlagSet, args []string) error {
 	return git.Run("web--browse", pr.HTMLURL)
 }
 
+// +command diff - Show pull request's diff
+//
+// 	diff
+//
+// Runs "git diff" between the base and head of Pull Request corresponding to
+// current branch.
+func doDiff(flags *flag.FlagSet, args []string) error {
+	flags.Parse(args)
+
+	cli, proj, err := setup()
+	if err != nil {
+		return err
+	}
+
+	branch, err := git.Head()
+	if err != nil {
+		return err
+	}
+
+	branch = strings.TrimPrefix(branch, "refs/heads/")
+
+	pr, err := corrPullRequest(cli, proj, branch)
+	if err != nil {
+		return err
+	}
+
+	return git.Run("diff", fmt.Sprintf("%s...%s", pr.Base.Sha, pr.Head.Sha))
+}
+
 func corrPullRequest(cli *github.Client, proj *github.Project, branch string) (*octokit.PullRequest, error) {
 	prNumber, err := git.Config("branch." + branch + ".prNumber")
 	if err != nil {

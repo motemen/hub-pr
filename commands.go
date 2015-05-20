@@ -40,4 +40,13 @@ func init() {
 			Long:   "browse\n\nOpens a web browser for the URL of Pull Request corresponding to current\nbranch.",
 		},
 	)
+
+	cli.Use(
+		&cli.Command{
+			Name:   "diff",
+			Action: doDiff,
+			Short:  "Show pull request's diff",
+			Long:   "diff\n\nRuns \"git diff\" between the base and head of Pull Request corresponding to\ncurrent branch.",
+		},
+	)
 }
