@@ -49,4 +49,13 @@ func init() {
 			Long:   "diff\n\nRuns \"git diff\" between the base and head of Pull Request corresponding to\ncurrent branch.",
 		},
 	)
+
+	cli.Use(
+		&cli.Command{
+			Name:   "show",
+			Action: doShow,
+			Short:  "Show pull request's information",
+			Long:   "show [-f TEMPLATE] [PULL_REQUEST_NUMBER]\n\nShows the information os a pull request (given # by argument or one current branch).\nThe context of the template is octokit.Issue <http://godoc.org/github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit#Issue>.",
+		},
+	)
 }

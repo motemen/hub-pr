@@ -211,6 +211,80 @@ func doDiff(flags *flag.FlagSet, args []string) error {
 	return git.Run("diff", fmt.Sprintf("%s...%s", pr.Base.Sha, pr.Head.Sha))
 }
 
+// +command show - Show pull request's information
+//
+// 	show [-f TEMPLATE] [PULL_REQUEST_NUMBER]
+//
+// Shows the information os a pull request (given # by argument or one current branch).
+// The context of the template is an octokit.Issue <http://godoc.org/github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit#Issue>.
+func doShow(flags *flag.FlagSet, args []string) error {
+	tmpl := `#{{.Number}} {{.Title}}
+
+{{.Body}}
+`
+
+	flags.StringVar(&tmpl, "f", tmpl, "information format")
+	flags.Parse(args)
+
+	tmplInfo := template.Must(template.New("pullrequest").Parse(tmpl))
+
+	cli, proj, err := setup()
+	if err != nil {
+		return err
+	}
+
+	var issue *octokit.Issue
+
+	issueNumber := flags.Arg(0)
+	if issueNumber == "" {
+		branch, err := git.Head()
+		if err != nil {
+			return err
+		}
+
+		branch = strings.TrimPrefix(branch, "refs/heads/")
+		prNumber, err := git.Config("branch." + branch + ".prNumber")
+		if err != nil {
+			return err
+		}
+
+		issueNumber = prNumber
+	}
+
+	url, err := octokit.RepoIssuesURL.Expand(octokit.M{"owner": proj.Owner, "repo": proj.Name, "number": issueNumber})
+	if err != nil {
+		return err
+	}
+
+	// github.Client.api()
+	if cli.Host.AccessToken == "" {
+		host, err := github.CurrentConfig().PromptForHost(cli.Host.Host)
+		if err != nil {
+			return err
+		}
+		cli.Host = host
+	}
+
+	tokenAuth := octokit.TokenAuth{AccessToken: cli.Host.AccessToken}
+	c := octokit.NewClient(tokenAuth)
+
+	var result *octokit.Result
+	issue, result = c.Issues(url).One()
+	if result.Err != nil {
+		return result.Err
+	}
+
+	var buf bytes.Buffer
+	err = tmplInfo.Execute(&buf, issue)
+	if err != nil {
+		return err
+	}
+
+	fmt.Print(buf.String())
+
+	return nil
+}
+
 func corrPullRequest(cli *github.Client, proj *github.Project, branch string) (*octokit.PullRequest, error) {
 	prNumber, err := git.Config("branch." + branch + ".prNumber")
 	if err != nil {
