@@ -55,7 +55,7 @@ func init() {
 			Name:   "show",
 			Action: doShow,
 			Short:  "Show pull request's information",
-			Long:   "show [-f TEMPLATE] [PULL_REQUEST_NUMBER]\n\nShows the information os a pull request (given # by argument or one current branch).\nThe context of the template is octokit.Issue <http://godoc.org/github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit#Issue>.",
+			Long:   "show [-f TEMPLATE] [PULL_REQUEST_NUMBER]\n\nShows the information os a pull request (given # by argument or one current branch).\nThe context of the template is an octokit.Issue <http://godoc.org/github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit#Issue>.",
 		},
 	)
 }
