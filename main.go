@@ -11,10 +11,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/github/hub/Godeps/_workspace/src/github.com/octokit/go-octokit/octokit"
 	"github.com/github/hub/git"
 	"github.com/github/hub/github"
-	"github.com/motemen/go-cli"
+	cli "github.com/motemen/go-cli"
 )
 
 const defaultTemplate = `#{{.Number}}-{{.Head.Repo.Owner.Login}}/{{.Head.Ref}}`
@@ -73,7 +72,7 @@ func doCheckout(flags *flag.FlagSet, args []string) error {
 		r.git("remote", "set-branches", "--add", remoteName, headBranch)
 		r.git("fetch", remoteName)
 	} else {
-		r.git("remote", "add", "-t", headBranch, "-f", remoteName, pr.Head.Repo.GitURL)
+		r.git("remote", "add", "-t", headBranch, "-f", remoteName, pr.Head.Repo.HtmlUrl)
 	}
 
 	if r.err != nil {
@@ -105,13 +104,13 @@ func doList(flags *flag.FlagSet, args []string) error {
 		return err
 	}
 
-	issues, err := cli.Issues(proj)
+	issues, err := cli.FetchIssues(proj, nil, 100, nil)
 	if err != nil {
 		return err
 	}
 
 	for _, issue := range issues {
-		if issue.PullRequest.HTMLURL == "" {
+		if issue.PullRequest == nil {
 			continue
 		}
 
@@ -179,7 +178,7 @@ func doBrowse(flags *flag.FlagSet, args []string) error {
 		return err
 	}
 
-	return git.Run("web--browse", pr.HTMLURL)
+	return git.Run("web--browse", pr.HtmlUrl)
 }
 
 // +command diff - Show pull request's diff
@@ -233,8 +232,6 @@ func doShow(flags *flag.FlagSet, args []string) error {
 		return err
 	}
 
-	var issue *octokit.Issue
-
 	issueNumber := flags.Arg(0)
 	if issueNumber == "" {
 		branch, err := git.Head()
@@ -251,28 +248,7 @@ func doShow(flags *flag.FlagSet, args []string) error {
 		issueNumber = prNumber
 	}
 
-	url, err := octokit.RepoIssuesURL.Expand(octokit.M{"owner": proj.Owner, "repo": proj.Name, "number": issueNumber})
-	if err != nil {
-		return err
-	}
-
-	// github.Client.api()
-	if cli.Host.AccessToken == "" {
-		host, err := github.CurrentConfig().PromptForHost(cli.Host.Host)
-		if err != nil {
-			return err
-		}
-		cli.Host = host
-	}
-
-	tokenAuth := octokit.TokenAuth{AccessToken: cli.Host.AccessToken}
-	c := octokit.NewClient(tokenAuth)
-
-	var result *octokit.Result
-	issue, result = c.Issues(url).One()
-	if result.Err != nil {
-		return result.Err
-	}
+	issue, err := cli.FetchIssue(proj, issueNumber)
 
 	var buf bytes.Buffer
 	err = tmplInfo.Execute(&buf, issue)
@@ -285,7 +261,7 @@ func doShow(flags *flag.FlagSet, args []string) error {
 	return nil
 }
 
-func corrPullRequest(cli *github.Client, proj *github.Project, branch string) (*octokit.PullRequest, error) {
+func corrPullRequest(cli *github.Client, proj *github.Project, branch string) (*github.PullRequest, error) {
 	prNumber, err := git.Config("branch." + branch + ".prNumber")
 	if err != nil {
 		return nil, err
